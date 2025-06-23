@@ -5,7 +5,7 @@ import { Menu, X, Home, Users, Briefcase, ImageIcon, Award, Phone, Bell, Globe }
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { useRouter, usePathname } from "next/navigation" 
+import { useRouter, usePathname } from "next/navigation"
 
 interface NavButton {
   text: string
@@ -26,7 +26,7 @@ interface NavContent {
 
 interface NavbarProps {
   className?: string
-  content?: NavContent 
+  content?: NavContent
 }
 
 const defaultNavContent: NavContent = {
@@ -38,19 +38,19 @@ const defaultNavContent: NavContent = {
   },
   buttons: [
     {
-      text: "Inscríbete Ahora",
+      text: "Preinscríbete",
       url: "https://site2.q10.com/Preinscripcion?aplentId=1b2f24dd-889b-45b4-b7ed-e8390ef5489d",
       variant: "secondary",
     },
     {
-      text: "Pagos en línea",
+      text: "Pagos",
       url: "https://site2.q10.com/login?ReturnUrl=%2F&aplentId=1b2f24dd-889b-45b4-b7ed-e8390ef5489d",
       variant: "primary",
     },
     {
       text: "PQRSF",
       url: "https://site2.q10.com/SolicitudesInstitucionales/NuevaSolicitud?aplentId=1b2f24dd-889b-45b4-b7ed-e8390ef5489d",
-      variant: "accent", 
+      variant: "accent",
     },
   ],
 }
@@ -69,17 +69,17 @@ export function Navbar({ className, content }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [navContent, setNavContent] = useState<NavContent>(content || defaultNavContent) 
+  const [navContent, setNavContent] = useState<NavContent>(content || defaultNavContent)
   const [showNotification, setShowNotification] = useState(true)
 
-  const router = useRouter() 
-  const pathname = usePathname() 
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (showNotification) {
       const timer = setTimeout(() => {
         setShowNotification(false)
-      }, 10000) 
+      }, 10000)
 
       return () => clearTimeout(timer)
     }
@@ -180,7 +180,7 @@ export function Navbar({ className, content }: NavbarProps) {
   const headerStyles = useMemo(
     () =>
       cn(
-        "fixed top-0 w-full z-50 transition-all duration-500 ease-out",
+        "fixed  w-full z-50 transition-all duration-500 ease-out",
         scrolled
           ? "bg-white/95 backdrop-blur-xl shadow-xl border-b border-gray-100/50"
           : "bg-gradient-to-b from-black/20 via-black/10 to-transparent backdrop-blur-sm",
@@ -245,10 +245,10 @@ export function Navbar({ className, content }: NavbarProps) {
 
       <header className={cn(headerStyles, showNotification && "top-10")} data-navbar>
         <div className="container mx-auto px-4 lg:px-6">
-          <div className="flex items-center justify-between h-16 lg:h-28 gap-28">
+          <div className="flex  justify- h-16 lg:h-28 ">
             {/* Logo - Left Side */}
             <div
-              className="flex items-center cursor-pointer group flex-shrink-2"
+              className="flex items-center cursor-pointer  flex-shrink-2"
               onClick={() => scrollToSection(null)}
               onKeyDown={(e) => e.key === "Enter" && scrollToSection(null)}
               tabIndex={0}
@@ -260,10 +260,9 @@ export function Navbar({ className, content }: NavbarProps) {
                   <img
                     src={navContent.logo || "/placeholder.svg"}
                     alt="UPARSISTEM"
-                    className="w-auto object-contain transition-transform duration-500 group-hover:scale-110"
+                    className="w-auto object-contain transition-transform duration-500 group-hover:scale-110 h-16 lg:h-28"
                     style={{
                       maxWidth: `${navContent.logoSize?.width || 150}px`,
-                      maxHeight: `${navContent.logoSize?.height || 40}px`,
                     }}
                   />
                 </div>
@@ -288,7 +287,7 @@ export function Navbar({ className, content }: NavbarProps) {
             </div>
 
             {/* Navigation Links - Center */}
-            <nav className="hidden lg:flex items-center space-x-1 xl:space-x flex-1 justify-center" role="navigation">
+            <nav className="hidden lg:flex items-center space-x-4 flex-1  justify-center" role="navigation">
               {navigationItems.map((item) => {
                 const IconComponent = item.icon
                 return (
@@ -310,7 +309,7 @@ export function Navbar({ className, content }: NavbarProps) {
             </nav>
 
             {/* CTA Buttons - Right Side */}
-            <div className="hidden md:flex items-center space-x-3 flex-shrink-0">
+            <div className="hidden xl:flex items-center space-x-3 flex-shrink-0 ">
               {buttons.map((button, index) => (
                 <Button
                   key={index}
@@ -374,10 +373,9 @@ export function Navbar({ className, content }: NavbarProps) {
                       <img
                         src={navContent.logo || "/placeholder.svg"}
                         alt="UPARSISTEM"
-                        className="w-auto object-contain"
+                        className="w-auto object-contain h-16"
                         style={{
                           maxWidth: `${navContent.logoSize?.width || 150}px`,
-                          maxHeight: `${navContent.logoSize?.height || 40}px`,
                         }}
                       />
                     ) : (

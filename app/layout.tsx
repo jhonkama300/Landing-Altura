@@ -9,9 +9,10 @@ import { AccessibilityPanel } from "@/components/accessibility-panel"
 const montserrat = Montserrat({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "UPARSISTEM - Centro de Entrenamiento en Trabajo Seguro en Altura",
+  title: "ALTURA UPARSISTEM - Centro de Entrenamiento en Trabajo Seguro en Altura",
   description: "Formación especializada en trabajo seguro en altura, certificados en calidad NTC 6052:2014 ICONTEC",
-    generator: 'v0.dev'
+    icons: {
+      icon: "/favicon.ico",}
 }
 
 export default function RootLayout({

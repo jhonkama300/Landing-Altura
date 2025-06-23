@@ -3,10 +3,10 @@ import mysql from "mysql2/promise"
 
 // Configuración de la conexión
 const dbConfig = {
-  host: process.env.DB_HOST || "162.211.80.32",
-  user: process.env.DB_USER || "sa1df687_altura",
-  password: process.env.DB_PASSWORD || "1L4hxfhc@",
-  database: process.env.DB_NAME || "sa1df687_altura_db",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "altura_db",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

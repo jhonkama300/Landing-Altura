@@ -1,26 +1,36 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Phone, Mail, ExternalLink, Send } from "lucide-react"
+import { MapPin, Phone, Mail, ExternalLink, Send, PhoneIcon as Whatsapp } from "lucide-react" // Importar el icono de WhatsApp
 import { getContentSection } from "@/lib/content"
 
 export function Contact() {
   const [contactData, setContactData] = useState({
     title: "Información de contacto",
     description: "Estamos disponibles para resolver todas tus dudas",
-    address: "Calle 16 A No. 12 - 36, Bogotá, Colombia",
-    secondaryAddress: "Calle 6 No. 1 - 3",
+    address: "Calle 16 A No. 12 - 36, Barrio Loperena Valledupar, Cesar",
+    secondaryAddress: "Calle 60 No. 18D - 33, Valledupar, Cesar",
     email: "alturasupar@uparsistem.edu.co",
     phone: "PBX: 6019197356",
     secondaryPhone: "3202509270 / 3103708870 / 3006506171",
     website: "www.uparsistem.edu.co",
     mapUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.8101320556097!2d-74.0720223!3d4.6097100999999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9a2e545a44c1%3A0x4b15aee42b8aee23!2sCl.%2016a%20%2312-36%2C%20Bogot%C3%A1!5e0!3m2!1ses!2sco!4v1715626800000!5m2!1ses!2sco",
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2954.546198844394!2d-73.25122093933759!3d10.472442829783622!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e8ab9b70ce6e525%3A0xa80636493c697ae8!2sCentro%20Educativo%20de%20Sistemas%20UPARSISTEM!5e1!3m2!1ses!2sco!4v1750709649313!5m2!1ses!2sco",
   })
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  })
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     // Cargar datos iniciales
@@ -42,6 +52,40 @@ export function Contact() {
       ...prev,
       ...data,
     }))
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({ ...prev, [id]: value }))
+  }
+
+  const handleWhatsAppSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSending(true)
+
+    const whatsappNumber = "573202509270" // Número de WhatsApp con código de país (Colombia)
+    const { name, email, phone, message } = formData
+
+    let whatsappMessage = `Hola, mi nombre es ${name}.`
+    if (email) whatsappMessage += ` Mi correo es ${email}.`
+    if (phone) whatsappMessage += ` Mi teléfono es ${phone}.`
+    whatsappMessage += `\n\n${message}`
+
+    const encodedMessage = encodeURIComponent(whatsappMessage)
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
+
+    window.open(whatsappUrl, "_blank")
+
+    // Reset form and loading state after a short delay for UX
+    setTimeout(() => {
+      setFormData({ name: "", email: "", phone: "", message: "" })
+      setIsSending(false)
+    }, 1000)
+  }
+
+  const formatPhoneNumberForCall = (phoneNumber: string) => {
+    // Elimina espacios y caracteres no numéricos, luego añade el prefijo tel:
+    return `tel:${phoneNumber.replace(/[^0-9+]/g, "")}`
   }
 
   return (
@@ -67,7 +111,7 @@ export function Contact() {
                   Envíanos un mensaje
                 </h3>
 
-                <form className="space-y-5">
+                <form onSubmit={handleWhatsAppSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium mb-2">
@@ -77,6 +121,8 @@ export function Contact() {
                         id="name"
                         placeholder="Tu nombre"
                         required
+                        value={formData.name}
+                        onChange={handleInputChange}
                         className="border-gray-300 focus:border-primary focus:ring-primary"
                       />
                     </div>
@@ -88,7 +134,8 @@ export function Contact() {
                         id="email"
                         type="email"
                         placeholder="tu@email.com"
-                        required
+                        value={formData.email}
+                        onChange={handleInputChange}
                         className="border-gray-300 focus:border-primary focus:ring-primary"
                       />
                     </div>
@@ -102,18 +149,8 @@ export function Contact() {
                       id="phone"
                       placeholder="Tu número de teléfono"
                       required
-                      className="border-gray-300 focus:border-primary focus:ring-primary"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-medium mb-2">
-                      Asunto
-                    </label>
-                    <Input
-                      id="subject"
-                      placeholder="Asunto de tu mensaje"
-                      required
+                      value={formData.phone}
+                      onChange={handleInputChange}
                       className="border-gray-300 focus:border-primary focus:ring-primary"
                     />
                   </div>
@@ -127,15 +164,30 @@ export function Contact() {
                       placeholder="¿En qué podemos ayudarte?"
                       rows={5}
                       required
+                      value={formData.message}
+                      onChange={handleInputChange}
                       className="border-gray-300 focus:border-primary focus:ring-primary"
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white font-medium py-3 px-6 rounded-md shadow-lg hover:shadow-xl transition-all duration-300"
+                    disabled={isSending}
+                    className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white font-medium py-3 px-6 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
                   >
-                    Enviar mensaje
+                    {isSending ? (
+                      <>
+                        <span className="animate-spin">
+                          <Send size={18} />
+                        </span>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Whatsapp size={18} />
+                        Enviar mensaje por WhatsApp
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
@@ -175,10 +227,29 @@ export function Contact() {
                     </div>
                     <div>
                       <h4 className="font-medium text-lg">Teléfonos</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{contactData.phone}</p>
-                      {contactData.secondaryPhone && (
-                        <p className="text-gray-600 dark:text-gray-400">{contactData.secondaryPhone}</p>
-                      )}
+                      <a
+                        href={formatPhoneNumberForCall(contactData.phone)}
+                        className="text-gray-600 dark:text-gray-400 hover:underline block"
+                      >
+                        {contactData.phone}
+                      </a>
+                      {contactData.secondaryPhone &&
+                        contactData.secondaryPhone.split("/").map((num, index) => (
+                          <a
+                            key={index}
+                            href={formatPhoneNumberForCall(num.trim())}
+                            className="text-gray-600 dark:text-gray-400 hover:underline block"
+                          >
+                            {num.trim()}
+                          </a>
+                        ))}
+                      <Button
+                        onClick={() => window.open(`https://wa.me/573202509270`, "_blank")}
+                        className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md shadow-md flex items-center justify-center gap-2 transition-all duration-300"
+                      >
+                        <Whatsapp size={20} />
+                        Enviar WhatsApp
+                      </Button>
                     </div>
                   </div>
 
@@ -188,7 +259,12 @@ export function Contact() {
                     </div>
                     <div>
                       <h4 className="font-medium text-lg">Correo electrónico</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{contactData.email}</p>
+                      <a
+                        href={`mailto:${contactData.email}`}
+                        className="text-gray-600 dark:text-gray-400 hover:underline"
+                      >
+                        {contactData.email}
+                      </a>
                     </div>
                   </div>
 
@@ -199,7 +275,14 @@ export function Contact() {
                       </div>
                       <div>
                         <h4 className="font-medium text-lg">Sitio web</h4>
-                        <p className="text-gray-600 dark:text-gray-400">{contactData.website}</p>
+                        <a
+                          href={`https://${contactData.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-600 dark:text-gray-400 hover:underline"
+                        >
+                          {contactData.website}
+                        </a>
                       </div>
                     </div>
                   )}
