@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Card } from "@/components/ui/card"
+import Autoplay from "embla-carousel-autoplay"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -20,51 +21,69 @@ import {
   Loader2,
   AlertTriangle,
   Video,
+  FolderOpen,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { getGalleryData, getAllCategories, type GalleryData } from "@/lib/gallery" // Importar getAllCategories
-import type { GalleryImage, GalleryCategory } from "@/lib/database" // Importar tipos de lib/database
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+
+type GalleryImage = {
+  id: string
+  src: string
+  title: string
+  alt: string
+  description?: string
+  tags?: string[]
+  type: "image" | "video"
+  thumbnail_src?: string
+}
+
+type GalleryCategory = {
+  slug: string
+  name: string
+}
+
+type GalleryData = Record<string, GalleryImage[]>
 
 export function Gallery() {
   // States
   const [galleryData, setGalleryData] = useState<GalleryData>({})
-  const [categories, setCategories] = useState<GalleryCategory[]>([]) // Nuevo estado para las categorías
+  const [categories, setCategories] = useState<GalleryCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<(GalleryImage & { categorySlug?: string; index?: number }) | null>(
     null,
   )
-  const [activeTab, setActiveTab] = useState("todos") // "todos" para mostrar todas las imágenes
+  const [activeTab, setActiveTab] = useState("todos")
   const [searchQuery, setSearchQuery] = useState("")
   const [showFullGalleryModal, setShowFullGalleryModal] = useState(false)
-  const [favorites, setFavorites] = new useState<Set<number>>(new Set())
+  const [favorites, setFavorites] = useState<Set<string>>(new Set()) // Cambiado a Set<string> para usar image.id
 
   // Refs
   const tabsRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }))
 
-  // Fetch data on component mount
   useEffect(() => {
     const fetchGallery = async () => {
       setLoading(true)
       setError(null)
       try {
-        const fetchedCategories = await getAllCategories()
-        setCategories(fetchedCategories)
+        const response = await fetch("/api/galery/filesystem")
+        if (!response.ok) throw new Error("Error al cargar la galería")
 
-        const data = await getGalleryData()
-        setGalleryData(data)
+        const data = await response.json()
+        setGalleryData(data.galleryData || {})
+        setCategories(data.categories || [])
 
-        // Establecer la primera categoría como activa si no hay ninguna seleccionada
-        if (fetchedCategories.length > 0) {
-          setActiveTab(fetchedCategories[0].slug)
+        if (data.categories.length > 0) {
+          setActiveTab(data.categories[0].slug)
         } else {
-          setActiveTab("todos") // Si no hay categorías, mantener "todos"
+          setActiveTab("todos")
         }
       } catch (err: any) {
         console.error("Error al cargar la galería:", err)
-        setError(err.message || "No se pudieron cargar las imágenes de la galería. Inténtalo de nuevo más tarde.")
+        setError(err.message || "No se pudieron cargar las imágenes de la galería.")
       } finally {
         setLoading(false)
       }
@@ -142,7 +161,8 @@ export function Gallery() {
     setSelectedImage({ ...image, categorySlug, index })
   }
 
-  const toggleFavorite = (imageId: number) => {
+  const toggleFavorite = (imageId: string) => {
+    // Cambiado a string para usar image.id
     setFavorites((prev) => {
       const newFavorites = new Set(prev)
       if (newFavorites.has(imageId)) {
@@ -169,7 +189,6 @@ export function Gallery() {
   }
 
   const currentImages = getFilteredImages(activeTab) // Usar la función de filtrado
-  const previewImages = currentImages.slice(0, 3) // Solo mostrar 3 imágenes como preview
 
   if (loading) {
     return (
@@ -209,14 +228,17 @@ export function Gallery() {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <motion.h2
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl sm:text-5xl md:text-4xl font-bold mb-4 relative inline-block"
+            className="flex items-center justify-center gap-3 mb-4"
           >
-            Galería de Imágenes
-            <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-primary rounded-full"></span>
-          </motion.h2>
+            <FolderOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl sm:text-5xl md:text-4xl font-bold relative inline-block">
+              Galería de Imágenes
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-primary rounded-full"></span>
+            </h2>
+          </motion.div>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -226,13 +248,24 @@ export function Gallery() {
             Explora nuestras instalaciones, programas de formación y equipos especializados para trabajo seguro en
             altura
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4"
+          >
+            <Badge variant="secondary" className="text-sm">
+              <FolderOpen className="h-3 w-3 mr-1" />
+              Las imágenes se cargan automáticamente desde las carpetas
+            </Badge>
+          </motion.div>
         </div>
 
         {/* Tabs and Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -280,37 +313,55 @@ export function Gallery() {
                   <div className="w-16 h-1 bg-primary mx-auto rounded-full"></div>
                 </div>
 
-                {/* Preview Images Grid */}
-                {previewImages.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {previewImages.map((image, index) => (
-                      <PreviewImageCard
-                        key={image.id}
-                        image={image}
-                        index={index}
-                        categorySlug={activeTab} // Pasar el slug de la categoría
-                        isFavorite={favorites.has(image.id)}
-                        onClick={() => handleImageClick(image, activeTab, index)}
-                        onToggleFavorite={() => toggleFavorite(image.id)}
-                      />
-                    ))}
+                {currentImages.length > 0 ? (
+                  <div className="mb-8">
+                    <Carousel
+                      plugins={[plugin.current]}
+                      opts={{
+                        align: "start",
+                        loop: true,
+                      }}
+                      className="w-full"
+                      onMouseEnter={plugin.current.stop}
+                      onMouseLeave={plugin.current.reset}
+                    >
+                      <CarouselContent>
+                        {currentImages.map((image, index) => (
+                          <CarouselItem key={image.id} className="md:basis-1/2 lg:basis-1/3">
+                            <CarouselImageCard
+                              image={image}
+                              index={index}
+                              categorySlug={activeTab}
+                              isFavorite={favorites.has(image.id)}
+                              onClick={() => handleImageClick(image, activeTab, index)}
+                              onToggleFavorite={() => toggleFavorite(image.id)}
+                            />
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="hidden md:flex" />
+                      <CarouselNext className="hidden md:flex" />
+                    </Carousel>
+
+                    {currentImages.length > 3 && (
+                      <div className="text-center mt-6">
+                        <Badge variant="secondary" className="text-sm">
+                          {currentImages.length} {currentImages.length === 1 ? "imagen" : "imágenes"} en esta categoría
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <ImageIcon className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                    <FolderOpen className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                     <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
                       No hay imágenes en esta categoría
                     </h3>
-                    <p className="text-gray-500 dark:text-gray-500">Añade imágenes desde el panel de administración.</p>
-                  </div>
-                )}
-
-                {/* Show more button if there are more images */}
-                {currentImages.length > 3 && (
-                  <div className="text-center">
-                    <Badge variant="secondary" className="mb-4">
-                      {currentImages.length - 3} imágenes más en esta categoría
-                    </Badge>
+                    <p className="text-gray-500 dark:text-gray-500">
+                      Crea una carpeta con el nombre de la categoría en{" "}
+                      <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">public/gallery/</code> y añade
+                      imágenes.
+                    </p>
                   </div>
                 )}
               </motion.div>
@@ -351,7 +402,7 @@ export function Gallery() {
           isOpen={showFullGalleryModal}
           onClose={() => setShowFullGalleryModal(false)}
           galleryData={galleryData}
-          categories={categories} // Pasar las categorías al modal completo
+          categories={categories}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           favorites={favorites}
@@ -363,31 +414,24 @@ export function Gallery() {
   )
 }
 
-// Preview Image Card Component
-function PreviewImageCard({
+function CarouselImageCard({
   image,
   index,
-  categorySlug, // Cambiado a categorySlug
+  categorySlug,
   isFavorite,
   onClick,
   onToggleFavorite,
 }: {
   image: GalleryImage
   index: number
-  categorySlug: string // Cambiado a categorySlug
+  categorySlug: string
   isFavorite: boolean
   onClick: () => void
   onToggleFavorite: () => void
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className="h-full"
-    >
-      <Card className="overflow-hidden shadow-lg h-full flex flex-col group cursor-pointer hover:shadow-xl transition-shadow duration-300">
+    <div className="p-1">
+      <Card className="overflow-hidden shadow-lg h-full flex flex-col group cursor-pointer hover:shadow-xl transition-shadow duration-300 border-2 hover:border-primary/50">
         <div className="relative aspect-square" onClick={onClick}>
           {image.type === "image" ? (
             <img
@@ -411,7 +455,10 @@ function PreviewImageCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
             <div className="p-4 text-white w-full">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Click para ampliar</span>
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Maximize2 className="h-4 w-4" />
+                  Click para ampliar
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -435,8 +482,8 @@ function PreviewImageCard({
           </div>
         </div>
 
-        <div className="p-4 flex-grow">
-          <h3 className="font-semibold text-lg mb-2">{image.title}</h3>
+        <CardContent className="p-4 flex-grow">
+          <h3 className="font-semibold text-lg mb-2 line-clamp-1">{image.title}</h3>
           {image.description && (
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{image.description}</p>
           )}
@@ -447,9 +494,9 @@ function PreviewImageCard({
               </Badge>
             ))}
           </div>
-        </div>
+        </CardContent>
       </Card>
-    </motion.div>
+    </div>
   )
 }
 
@@ -591,8 +638,8 @@ function FullGalleryModal({
   categories: GalleryCategory[] // Tipo para categorías
   searchQuery: string
   onSearchChange: (query: string) => void
-  favorites: Set<number>
-  onToggleFavorite: (id: number) => void
+  favorites: Set<string> // Cambiado a Set<string>
+  onToggleFavorite: (id: string) => void // Cambiado a string
   onImageClick: (image: GalleryImage, categorySlug: string, index: number) => void // Cambiado a categorySlug
 }) {
   const [activeTab, setActiveTab] = useState("todos")
@@ -700,7 +747,7 @@ function FullGalleryModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                       {filteredImages.map((image, index) => (
                         <motion.div
-                          key={`${image.category_id}-${image.id}`} // Usar category_id y id para la clave
+                          key={image.id} // Usar image.id para la clave
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: index * 0.05 }}
@@ -708,7 +755,7 @@ function FullGalleryModal({
                           className="group cursor-pointer"
                           onClick={() => onImageClick(image, image.categorySlug || "todos", index)} // Pasar categorySlug
                         >
-                          <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                          <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border-2 hover:border-primary/50">
                             <div className="relative aspect-square">
                               {image.type === "image" ? (
                                 <img
@@ -720,10 +767,10 @@ function FullGalleryModal({
                               ) : (
                                 <video
                                   src={image.src}
-                                  poster={image.thumbnail_src || "/placeholder.svg"} // Use thumbnail for poster
-                                  controls={false} // No controls in preview
-                                  muted // Mute in preview
-                                  loop // Loop in preview
+                                  poster={image.thumbnail_src || "/placeholder.svg"}
+                                  controls={false}
+                                  muted
+                                  loop
                                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                               )}
@@ -768,7 +815,7 @@ function FullGalleryModal({
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <ImageIcon className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                      <FolderOpen className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                       <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
                         No se encontraron imágenes
                       </h3>

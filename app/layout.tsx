@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   title: "ALTURA UPARSISTEM - Centro de Entrenamiento en Trabajo Seguro en Altura",
   description: "Formación especializada en trabajo seguro en altura, certificados en calidad NTC 6052:2014 ICONTEC",
     icons: {
-      icon: "/favicon.ico",}
+      icon: "/favicon.ico",},
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
