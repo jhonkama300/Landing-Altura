@@ -140,8 +140,8 @@ async function scanGalleryFolders(): Promise<{
 // GET: Obtener todas las imágenes organizadas por categoría desde el sistema de archivos
 export async function GET() {
   try {
-    const { galleryData } = await scanGalleryFolders()
-    return NextResponse.json(galleryData)
+    const { categories, galleryData } = await scanGalleryFolders()
+    return NextResponse.json({ categories, galleryData })
   } catch (error) {
     console.error("Error al escanear carpetas de galería:", error)
     return NextResponse.json(

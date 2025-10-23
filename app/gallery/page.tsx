@@ -11,13 +11,25 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { X, ChevronLeft, ChevronRight, Search, ArrowLeft, SlidersHorizontal, Check } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { getGalleryData, type GalleryImage } from "@/lib/gallery"
+import { getGalleryDataFromFileSystem } from "@/lib/gallery-filesystem"
 
 // Tipos para los filtros
 type SortOption = "newest" | "oldest" | "az" | "za"
 type FilterOptions = {
   sortBy: SortOption
   showWithDescription: boolean
+}
+
+// Tipos para GalleryImage
+type GalleryImage = {
+  id: number
+  src: string
+  alt: string
+  title: string
+  description?: string
+  tags?: string[]
+  type: "image" | "video"
+  thumbnail_src?: string
 }
 
 export default function GalleryPage() {
@@ -63,23 +75,31 @@ export default function GalleryPage() {
   }
 
   useEffect(() => {
-    // Cargar datos de la galería desde localStorage
-    const data = getGalleryData()
-    setGalleryData(data)
+    const loadGalleryData = async () => {
+      try {
+        const data = await getGalleryDataFromFileSystem()
+        setGalleryData(data)
 
-    // Combinar todas las imágenes para la vista "todos"
-    const combined: (GalleryImage & { category: string })[] = []
-    Object.keys(data).forEach((category) => {
-      data[category].forEach((img) => {
-        combined.push({
-          ...img,
-          category,
+        // Combinar todas las imágenes para la vista "todos"
+        const combined: (GalleryImage & { category: string })[] = []
+        Object.keys(data).forEach((category) => {
+          data[category].forEach((img) => {
+            combined.push({
+              ...img,
+              category,
+            })
+          })
         })
-      })
-    })
 
-    setAllImages(combined)
-    setIsLoaded(true)
+        setAllImages(combined)
+        setIsLoaded(true)
+      } catch (error) {
+        console.error("Error al cargar la galería:", error)
+        setIsLoaded(true) // Marcar como cargado incluso en error para evitar pantalla de carga infinita
+      }
+    }
+
+    loadGalleryData()
   }, [])
 
   // Desplazar a la pestaña activa cuando cambia

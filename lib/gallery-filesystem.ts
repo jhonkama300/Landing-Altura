@@ -1,5 +1,5 @@
 // Biblioteca para gestionar los datos de la galería desde el sistema de archivos
-import type { GalleryCategory, GalleryImage } from "@/lib/database"
+import type { GalleryCategory, GalleryImage } from "@/lib/types"
 
 // Tipo para la estructura de datos de la galería
 export interface GalleryData {

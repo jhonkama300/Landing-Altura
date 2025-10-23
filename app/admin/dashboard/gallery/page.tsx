@@ -3,12 +3,11 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Trash2, RefreshCw, AlertTriangle, Check, Upload, FolderOpen, ImageIcon, FolderPlus, Video } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input, Label } from "@/components/ui/input"
+import { Upload, Trash2, RefreshCw, AlertTriangle, Check, FolderOpen, FolderPlus, ImageIcon, Video } from "lucide-react"
 
 type GalleryImage = {
   id: string
@@ -198,6 +197,12 @@ export default function GalleryAdminPage() {
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.message || "Error al crear categoría")
+      }
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.message || "Error al crear categoría")
       }
 
       setShowNewCategoryDialog(false)
